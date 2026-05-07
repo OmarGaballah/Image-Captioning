@@ -5,7 +5,6 @@
 
 import torch
 import torch.nn as nn
-from ultralytics import YOLO
 
 
 class YOLOFeatureExtractor(nn.Module):
@@ -24,7 +23,8 @@ class YOLOFeatureExtractor(nn.Module):
     ) -> None:
         super().__init__()
 
-        # Load pre-trained YOLOv8 model from ultralytics
+        # Lazy import: keeps ultralytics out of DataLoader worker subprocesses
+        from ultralytics import YOLO
         yolo = YOLO(model_name)
         
         # Extract the backbone layers (up to SPPF module)
