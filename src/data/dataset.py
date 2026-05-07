@@ -3,6 +3,7 @@
 import json
 import os
 import random
+import time
 
 import torch
 from PIL import Image
@@ -94,11 +95,21 @@ class COCOCaptionDataset(Dataset):
 
     # Gets the image and caption for a given index.
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
-        img_id = self.image_ids[idx]
-        image = self._load_image(img_id)
-        caption = self._pick_caption(img_id)
-        tokens = torch.tensor(self.vocab.encode(caption), dtype=torch.long)
-        return image, tokens
+        for offset in range(len(self)):
+            img_id = self.image_ids[(idx + offset) % len(self)]
+            for attempt in range(3):
+                try:
+                    image = self._load_image(img_id)
+                    caption = self._pick_caption(img_id)
+                    tokens = torch.tensor(self.vocab.encode(caption), dtype=torch.long)
+                    return image, tokens
+                except OSError:
+                    # Transient Drive I/O error — wait briefly and retry
+                    if attempt < 2:
+                        time.sleep(0.5)
+            # All 3 attempts failed for this image, try the next one
+            print(f"Warning: skipping image {img_id} after 3 failed read attempts")
+        raise RuntimeError("Failed to load any image — check Drive connection")
 
     # ------------------------------------------------------------------
     # Evaluation helper
