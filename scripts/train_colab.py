@@ -38,6 +38,8 @@ CKPT_DIR     = f"{DRIVE_BASE}/checkpoints"
 parser = argparse.ArgumentParser()
 parser.add_argument("--resume", default=None,
                     help="Path to a saved epoch_XX.pt checkpoint to resume from")
+parser.add_argument("--num_workers", default=2, type=int,
+                    help="DataLoader worker processes (use 2 on Colab)")
 args = parser.parse_args()
 
 train(
@@ -47,4 +49,5 @@ train(
     epochs=20,
     batch_size=32,
     resume=args.resume,
+    num_workers=args.num_workers,
 )
