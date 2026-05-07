@@ -74,11 +74,6 @@ class CaptionDecoder(nn.Module):
         visual_tokens: torch.Tensor,  # [B, N, d_model]  from encoder
         pad_mask: torch.Tensor = None,  # [B, T]  True at <pad> positions
     ) -> torch.Tensor:                # [B, T, vocab_size]
-        T = captions.size(1)
-        causal_mask = nn.Transformer.generate_square_subsequent_mask(
-            T, device=captions.device
-        )
-
         # Scale embeddings so positional encoding doesn't dominate them
         x = self.token_embed(captions) * math.sqrt(self.d_model)  # [B, T, d_model]
         x = self.pos_encoding(x)
@@ -86,7 +81,7 @@ class CaptionDecoder(nn.Module):
         x = self.transformer(
             tgt=x,
             memory=visual_tokens,
-            tgt_mask=causal_mask,
+            tgt_is_causal=True,         # PyTorch 2.0+: handles causal mask internally
             tgt_key_padding_mask=pad_mask,
         )
         return self.output_proj(x)  # [B, T, vocab_size]

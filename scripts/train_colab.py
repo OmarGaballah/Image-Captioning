@@ -32,19 +32,24 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from src.train import train
 
 DRIVE_BASE   = "/content/drive/MyDrive/coco"
-VOCAB_PATH   = f"{DRIVE_BASE}/vocab.json"
-CKPT_DIR     = f"{DRIVE_BASE}/checkpoints"
+LOCAL_BASE   = "/content/coco"           # local SSD — ~80x faster than Drive
+CKPT_DIR     = f"{DRIVE_BASE}/checkpoints"  # checkpoints always saved to Drive
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--resume", default=None,
                     help="Path to a saved epoch_XX.pt checkpoint to resume from")
-parser.add_argument("--num_workers", default=0, type=int,
-                    help="DataLoader worker processes (0 = main process, avoids subprocess import issues on Colab)")
+parser.add_argument("--num_workers", default=2, type=int,
+                    help="DataLoader worker processes")
+parser.add_argument("--local", action="store_true",
+                    help="Read images from local /content/coco instead of Drive")
 args = parser.parse_args()
 
+data_dir  = LOCAL_BASE if args.local else DRIVE_BASE
+vocab_path = f"{data_dir}/vocab.json"
+
 train(
-    data_dir=DRIVE_BASE,
-    vocab_path=VOCAB_PATH,
+    data_dir=data_dir,
+    vocab_path=vocab_path,
     checkpoint_dir=CKPT_DIR,
     epochs=20,
     batch_size=32,
